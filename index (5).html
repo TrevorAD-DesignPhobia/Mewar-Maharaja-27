@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Strategopoly</title>
+<style>
+:root{--bg:#eceff5;--fg:#161b2b;--card:#fff;--line:#cfd5e3;--acc:#2a3a73;--accfg:#fff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#12151f;--fg:#eceef6;--card:#1d2231;--line:#363e55;--acc:#9db0ff;--accfg:#10142a}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#12151f;--fg:#eceef6;--card:#1d2231;--line:#363e55;--acc:#9db0ff;--accfg:#10142a}
+*{box-sizing:border-box}html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif}
+.hide{display:none!important}
+#setup{max-width:1000px;margin:auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin:12px 0;overflow-x:auto}
+h1,h2{margin:.2em 0}
+table{width:100%;border-collapse:collapse}td,th{padding:3px 4px;text-align:left;font-size:13px}
+input,select,button{font:inherit;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg)}
+input[type=color]{padding:0;width:38px;height:30px}
+input[type=number]{width:90px}
+input[type=checkbox]{width:auto}
+button{cursor:pointer}
+.pri{background:var(--acc);color:var(--accfg);border-color:var(--acc);font-weight:700}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+#game{height:100%;display:flex;flex-direction:column;padding:8px;gap:8px}
+#board{width:min(100%,calc((100vh - 96px)*4/3));aspect-ratio:4/3;margin:0 auto;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(6,1fr);gap:6px}
+.t{border-radius:10px;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;text-align:center;padding:2px;font-weight:700;font-size:clamp(9px,1.5vw,19px);line-height:1.1;overflow:hidden}
+.t .n{position:absolute;top:2px;left:4px;font-size:.7em;background:#0008;border-radius:4px;padding:0 4px}
+.t .i{font-size:2em}
+.t.cur{outline:4px solid #ffd400;z-index:1}
+.pw{display:flex;gap:2px;position:absolute;bottom:2px;right:3px}
+.p{width:1.8em;height:1.8em;border-radius:50%;border:2px solid #fff;display:grid;place-items:center;font-size:.85em;color:#fff;box-shadow:0 2px 5px #0007}
+#mid{grid-area:2/2/6/8;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center}
+#mid h1{font-size:clamp(26px,4.6vw,64px);letter-spacing:.06em;margin:0}
+#dice{font-size:clamp(70px,11vw,150px);line-height:1}
+.big{font-size:clamp(18px,2.4vw,32px);padding:10px 34px}
+.turn{color:#fff;font-weight:700;padding:4px 18px;border-radius:20px;font-size:clamp(14px,2vw,26px)}
+#bar{display:flex;gap:8px;align-items:stretch}
+.tm{flex:1;border-radius:10px;padding:5px 10px;color:#fff;font-weight:700;font-size:clamp(11px,1.6vw,20px)}
+.tm.cur{outline:4px solid #ffd400}.tm small{display:block;font-weight:400;opacity:.9}
+#modal{position:fixed;inset:0;background:#000b;display:grid;place-items:center;z-index:9}
+.box{background:var(--card);color:var(--fg);border-radius:16px;padding:22px;min-width:min(520px,92vw);max-width:92vw;max-height:90vh;overflow:auto;font-size:18px}
+.box table td{font-size:16px}
+.ban{color:#fff;padding:8px 14px;border-radius:10px;margin:8px 0;font-size:20px}
+.co{border:2px dashed var(--acc);border-radius:10px;padding:8px 12px;margin:8px 0;font-size:16px}
+.flip{animation:fl .7s ease-out}@keyframes fl{from{transform:rotateY(90deg);opacity:0}to{transform:none;opacity:1}}
+</style></head><body>
+<div id="setup"></div>
+<div id="game" class="hide"><div id="board"></div><div id="bar"></div></div>
+<div id="modal" class="hide"><div class="box" id="mb"></div></div>
+<script>
+const $=id=>document.getElementById(id), q=s=>String(s).replace(/"/g,'&quot;'), F='⚀⚁⚂⚃⚄⚅';
+const RET={campus:20,govt:10,startup:40,future:60,action:0,start:0};
+/* Market cards, one per year end: [title, flavour, change in return %] */
+const MK=[['Demand surge','Customers everywhere',30],['Investor frenzy','Money is pouring in',20],['Policy tailwind','New government scheme',20],['Strong quarter','Results beat estimates',10],['Export win','Global orders arrive',15],
+['Market crash','Panic selling',-30],['Funding freeze','Investors go quiet',-20],['Supply chain shock','Costs jump',-20],['Weak quarter','Results miss estimates',-10],['Scandal breaks','Trust takes a hit',-25]];
+function mk(){
+ const L=[['START','🏁','start','start'],['Amul','🍔','campus'],['DRDO','🛩️','govt'],['Blinkit','🍪','startup'],['6G Network','📡','future'],['Roll Again','🎲','action','roll'],['Delhi Metro','🚆','govt'],['Kwaliti','🍦','campus'],['Move 2 steps','↕️','action','move'],['BSNL','📶','govt'],['Roll Again','🎲','action','roll'],['Megha','🥟','campus'],['Zepto','🛵','startup'],['Humanoid Robots','🤖','future'],['Move 2 steps','↔️','action','move'],['LIC','📄','govt'],['Meesho','🛍️','startup'],['Salon Shop','💈','campus'],['IRCTC','🚂','govt'],['Quess','👥','campus'],['Quantum Computing','💠','future'],['Move 2 steps','↕️','action','move'],['Treat 2 Eat','🍛','campus'],['Alliance Air','✈️','govt']];
+ return{title:'STRATEGOPOLY',sub:'ConsultU · Invest now, collect next year',money:10000,rounds:5,coFee:20,passFee:10,liqFee:2,salary:5,divMin:3,divBonus:15,timer:30,loan:1000,showRet:false,v:3,titles:['Mewar Maharajas','City Palace Courtiers','Pichola Boatmen','Haldighati Underdogs'],
+ teams:[{name:'Team 1',color:'#e63946'},{name:'Team 2',color:'#1d7ae0'},{name:'Team 3',color:'#f4a300'},{name:'Team 4',color:'#2a9d5c'}],
+ cats:{campus:{l:'On Campus',c:'#d9645c'},govt:{l:'Govt. Owned',c:'#2a3a73'},startup:{l:'Startup',c:'#6b9a6b'},future:{l:'Futuristic',c:'#4a3222'},action:{l:'Action',c:'#a87272'},start:{l:'Start',c:'#7cb342'}},
+ tiles:L.map(a=>({name:a[0],icon:a[1],cat:a[2],type:a[3]||'invest',ret:RET[a[2]]}))};
+}
+let S=mk(),G=null;
+try{const s=JSON.parse(localStorage.getItem('strat1'));if(s&&s.tiles&&s.tiles.length==24)S=s}catch(e){}
+if((S.v||0)<3){S.coFee=20;S.passFee=10;S.liqFee=2;S.v=3}
+S.coFee??=20;S.passFee??=10;S.liqFee??=2;S.titles??=mk().titles;S.salary??=5;S.divMin??=3;S.divBonus??=15;S.timer??=30;S.loan??=1000;S.showRet??=false;
+function save(){try{localStorage.setItem('strat1',JSON.stringify(S))}catch(e){}}
+const TY={invest:'Invest tile',roll:'Roll again',move:'Move 2 steps',start:'Start / none'};
+
+function renderSetup(){
+ const ck=Object.keys(S.cats);
+ $('setup').innerHTML=`<h1>Strategopoly setup</h1>
+ <div class="row"><button class="pri" onclick="startGame()">Start new game</button>${G?'<button onclick="show(1)">Resume game</button>':''}<button onclick="if(confirm('Reset everything to defaults?')){S=mk();save();renderSetup()}">Reset defaults</button></div>
+ <div class="card"><h2>Game</h2><div class="row">
+ <label>Title <input value="${q(S.title)}" oninput="S.title=this.value;save()"></label>
+ <label>Subtitle <input value="${q(S.sub)}" size="34" oninput="S.sub=this.value;save()"></label>
+ <label>Starting money <input type="number" value="${S.money}" oninput="S.money=+this.value;save()"></label>
+ <label>Years <input type="number" min="1" value="${S.rounds}" oninput="S.rounds=+this.value;save()"></label>
+ <label>Lap salary % of bank <input type="number" min="0" value="${S.salary}" oninput="S.salary=+this.value;save()"></label>
+ <label>Diversify: min categories <input type="number" min="1" value="${S.divMin}" oninput="S.divMin=+this.value;save()"></label>
+ <label>Diversify bonus % of bank <input type="number" min="0" value="${S.divBonus}" oninput="S.divBonus=+this.value;save()"></label>
+ <label>Co-invest fee % (of your own investment) <input type="number" min="0" value="${S.coFee}" oninput="S.coFee=+this.value;save()"></label>
+ <label>Pass fee % (of their stake, if they refuse) <input type="number" min="0" value="${S.passFee}" oninput="S.passFee=+this.value;save()"></label>
+ <label>Liquidation fee % <input type="number" min="0" value="${S.liqFee}" oninput="S.liqFee=+this.value;save()"></label>
+ <label>Invest timer (sec, 0 = off) <input type="number" min="0" value="${S.timer}" oninput="S.timer=+this.value;save()"></label>
+ <label>Rescue loan ₹ <input type="number" min="0" value="${S.loan}" oninput="S.loan=+this.value;save()"></label>
+ <label><input type="checkbox" ${S.showRet?'checked':''} onchange="S.showRet=this.checked;save()"> Show return % in the invest popup</label></div></div>
+ <div class="card"><h2>Teams</h2><div class="row">${S.teams.map((t,i)=>`<span><input type="color" value="${t.color}" onchange="S.teams[${i}].color=this.value;save()"> <input value="${q(t.name)}" oninput="S.teams[${i}].name=this.value;save()"></span>`).join('')}</div></div>
+ <div class="card"><h2>Year-end titles</h2><p>Shown after every year by net-worth rank, 1st to last.</p><div class="row">${S.titles.map((x,i)=>`<label>#${i+1} <input value="${q(x)}" size="22" oninput="S.titles[${i}]=this.value;save()"></label>`).join('')}</div></div>
+ <div class="card"><h2>Categories</h2><table><tr><th>Name</th><th>Colour</th><th>Return % for all invest tiles of this category</th></tr>${ck.map(k=>`<tr><td><input value="${q(S.cats[k].l)}" oninput="S.cats[\'${k}\'].l=this.value;save()"></td><td><input type="color" value="${S.cats[k].c}" onchange="S.cats[\'${k}\'].c=this.value;save()"></td><td><input type="number" id="cr_${k}" value="${RET[k]}"> <button onclick="applyRet(\'${k}\')">Apply</button></td></tr>`).join('')}</table></div>
+ <div class="card"><h2>Tiles</h2><table><tr><th>#</th><th>Icon</th><th>Name</th><th>Category</th><th>Type</th><th>Return %</th></tr>${S.tiles.map((t,i)=>`<tr><td>${i+1}</td>
+ <td><input value="${q(t.icon)}" size="3" oninput="S.tiles[${i}].icon=this.value;save()"></td>
+ <td><input value="${q(t.name)}" oninput="S.tiles[${i}].name=this.value;save()"></td>
+ <td><select onchange="S.tiles[${i}].cat=this.value;save()">${ck.map(k=>`<option value="${k}" ${k==t.cat?'selected':''}>${S.cats[k].l}</option>`).join('')}</select></td>
+ <td><select onchange="S.tiles[${i}].type=this.value;save()">${Object.keys(TY).map(k=>`<option value="${k}" ${k==t.type?'selected':''}>${TY[k]}</option>`).join('')}</select></td>
+ <td><input type="number" value="${t.ret}" oninput="S.tiles[${i}].ret=+this.value;save()"></td></tr>`).join('')}</table></div>`;
+}
+function applyRet(k){const v=+$('cr_'+k).value;S.tiles.forEach(t=>{if(t.cat==k&&t.type=='invest')t.ret=v});save();renderSetup()}
+function show(g){$('setup').classList.toggle('hide',!!g);$('game').classList.toggle('hide',!g);g?renderGame():renderSetup()}
+function startGame(){G={round:1,turn:0,busy:false,done:false,face:5,bag:[],rs:null,deb:null,resH:'',tmr:0,debt:S.teams.map(()=>0),teams:S.teams.map(()=>({pos:0,money:S.money,done:false})),inv:[],used:S.teams.map(()=>0),wq:null};closeM();show(1)}
+
+function gp(i){return i<8?[1,i+1]:i<12?[i-6,8]:i<20?[6,8-(i-12)]:[5-(i-20),1]}
+function renderGame(){
+ const cur=G.turn;
+ $('board').innerHTML=S.tiles.map((t,i)=>{const[r,c]=gp(i);
+  const pw=G.teams.map((p,k)=>p.pos==i?`<span class="p" style="background:${S.teams[k].color}">${k+1}</span>`:'').join('');
+  return`<div class="t ${G.teams[cur].pos==i?'cur':''}" style="grid-area:${r}/${c};background:${S.cats[t.cat].c}"><span class="n">${i+1}</span><span class="i">${t.icon}</span>${t.name}<div class="pw">${pw}</div></div>`}).join('')
+ +`<div id="mid"><h1>${S.title}</h1><div>${S.sub}</div><div>Year ${G.round} of ${S.rounds}</div>
+ <div class="turn" style="background:${S.teams[cur].color}">${S.teams[cur].name}</div>
+ <div id="dice">${F[G.face]}</div><button class="pri big" onclick="roll()">Roll dice</button>${G.used[cur]?'':'<button onclick="choose()">🎯 Choose a tile (once a year)</button>'}</div>`;
+ $('bar').innerHTML=S.teams.map((t,k)=>{const nc=new Set(G.inv.filter(v=>v.t==k).map(v=>S.tiles[v.tile].cat)).size,pend=G.inv.filter(v=>v.t==k).reduce((s,v)=>s+v.a,0);
+  return`<div class="tm ${k==cur?'cur':''}" style="background:${t.color}">${t.name}<small>Net worth ₹${G.teams[k].money+pend-G.debt[k]} · Cash ₹${G.teams[k].money}${G.teams[k].done?' · lap done ✓':''}${pend?` · ₹${pend} invested`:''} · 🧩 ${nc}/${S.divMin} categories</small></div>`}).join('')
+ +`<button onclick="endRound()">End year</button><button onclick="show(0)">Setup</button>`;
+}
+function modal(h){$('mb').innerHTML=h;$('modal').classList.remove('hide')}
+function closeM(){if(G)clearInterval(G.tmr);$('modal').classList.add('hide')}
+function roll(){
+ if(!G||G.busy||G.done||!$('modal').classList.contains('hide'))return;
+ G.busy=true;let n=0;if(!G.bag.length){G.bag=[0,0,1,1,2,2,3,3,4,4,5,5].sort(()=>Math.random()-.5)}const f=G.bag.pop();
+ const iv=setInterval(()=>{G.face=Math.floor(Math.random()*6);$('dice').textContent=F[G.face];
+  if(++n>9){clearInterval(iv);G.face=f;$('dice').textContent=F[f];walk(G.turn,f+1,1,()=>land(G.turn))}},80);
+}
+/* Completing a lap (stepping from tile 24 onto Start) pays a salary on the bank balance */
+function walk(t,n,d,cb){if(!n)return cb();const p=G.teams[t],fin=d>0&&p.pos==23;p.pos=(p.pos+d+24)%24;
+ if(fin){p.done=true;p.bonus=Math.round(p.money*S.salary/100);p.money+=p.bonus}
+ renderGame();setTimeout(()=>fin?cb():walk(t,n-1,d,cb),260)}
+/* Other teams already invested on the tile this team stands on, with the co-invest fee owed to each */
+function coInfo(t){const pos=G.teams[t].pos;
+ return S.teams.map((x,k)=>({k,s:G.inv.filter(v=>v.t==k&&v.tile==pos).reduce((s,v)=>s+v.a,0)})).filter(o=>o.k!=t&&o.s>0).map(o=>({...o,p:Math.round(o.s*S.passFee/100)}))}
+function land(t){
+ const T=S.tiles[G.teams[t].pos],nm=`<b style="color:${S.teams[t].color}">${S.teams[t].name}</b>`;
+ if(G.teams[t].done)return modal(`<h2>🏁 Lap complete</h2><p>${nm} is back at Start and earns a salary of <b>₹${G.teams[t].bonus||0}</b> (${S.salary}% of the bank).</p><p>Now waiting for the other teams.</p><button class="pri" onclick="closeM();nextTurn()">OK</button>`);
+ if(T.type=='invest')investModal(t);
+ else if(T.type=='roll')modal(`<h2>${T.icon} Roll again</h2><p>${nm} rolls again.</p><button class="pri" onclick="closeM();G.busy=false;renderGame()">Roll again</button>`);
+ else if(T.type=='move')modal(`<h2>${T.icon} Move 2 steps</h2><p>${nm}, choose a direction.</p><div class="row"><button onclick="mv(-1)">Back 2</button><button class="pri" onclick="mv(1)">Forward 2</button></div>`);
+ else nextTurn();
+}
+function investModal(t){const T=S.tiles[G.teams[t].pos],nm=`<b style="color:${S.teams[t].color}">${S.teams[t].name}</b>`,m=G.teams[t].money,oth=coInfo(t),toll=oth.reduce((x,o)=>x+o.p,0),
+ av=Math.floor(m/(1+(oth.length?S.coFee/100:0)));
+ const co=oth.length?`<div class="co">🤝 ${oth.map(o=>`<b style="color:${S.teams[o.k].color}">${S.teams[o.k].name}</b> (₹${o.s})`).join(', ')} already invested here.<br>✅ <b>If they accept</b>: you pay <b>${S.coFee}% of what you invest</b> to them, then invest.<br>❌ <b>If they refuse</b>: you pay <b>₹${toll}</b> (${S.passFee}% of their stake) and move on.<br><label><input type="checkbox" id="agree"> They accept my co-investment</label></div>`:'';
+ modal(`<h2>${T.icon} ${T.name}</h2><p>${S.cats[T.cat].l}${S.showRet?` · return <b>${T.ret}%</b> next year`:''}</p><p>${nm} has ₹${m}${S.timer?` · <b id="tm">⏱ ${S.timer}s</b>`:''}</p>${co}
+ <div class="row"><input id="amt" type="number" min="0" max="${av}" value="0" style="width:150px;font-size:24px">${[25,50,100].map(p=>`<button onclick="$('amt').value=Math.floor(${av}*${p}/100)">${p}%</button>`).join('')}</div>
+ <div class="row" style="margin-top:14px"><button class="pri" onclick="inv(${t})">${oth.length?'Co-invest':'Invest'}</button><button onclick="inv(${t},1)">${oth.length?'They refuse / skip · pay ₹'+toll:'Skip'}</button></div>`);if(S.timer)tick(t)}
+function tick(t){clearInterval(G.tmr);let n=S.timer;G.tmr=setInterval(()=>{n--;const e=$('tm');if(!e){clearInterval(G.tmr);return}e.textContent='⏱ '+n+'s';e.style.color=n<=10?'#e63946':'';if(n<=0){clearInterval(G.tmr);inv(t,1)}},1000)}
+function tileMenu(fn){return Object.keys(S.cats).filter(k=>S.tiles.some(x=>x.cat==k&&x.type=='invest')).map(k=>`<div class="ban" style="background:${S.cats[k].c}">${S.cats[k].l}</div><div class="row">${S.tiles.map((x,i)=>x.cat==k&&x.type=='invest'?`<button onclick="${fn}(${i})">${x.icon} ${x.name}</button>`:'').join('')}</div>`).join('')}
+function choose(){
+ if(!G||G.busy||G.done||G.used[G.turn]||!$('modal').classList.contains('hide'))return;
+ const t=G.turn;
+ modal(`<h2>🎯 Choose your investment</h2><p><b style="color:${S.teams[t].color}">${S.teams[t].name}</b>, once a year you can skip the dice and go straight to any invest tile. This replaces your roll for this turn.</p>`+tileMenu('goTile')+`<div class="row" style="margin-top:14px"><button onclick="closeM()">Cancel</button></div>`)}
+/* Teams that finished their lap and wait at Start may pick a venture after every other team's turn */
+function waitModal(k){const t=S.teams[k];
+ modal(`<h2>🕒 ${t.name} is waiting at Start</h2><p><b style="color:${t.color}">${t.name}</b> has ₹${G.teams[k].money}. Choose a venture to invest in while the others play, or skip.</p>`+tileMenu('waitPick')+`<div class="row" style="margin-top:14px"><button onclick="closeM();nextTurn()">Skip</button></div>`)}
+function waitPick(i){closeM();G.teams[G.wk].pos=i;investModal(G.wk)}
+function goTile(i){closeM();const t=G.turn;G.used[t]=1;G.busy=true;G.teams[t].pos=i;renderGame();land(t)}
+function mv(d){closeM();walk(G.turn,2,d,()=>land(G.turn))}
+function fin(t){if(G.teams[t].done)G.teams[t].pos=0;closeM();nextTurn()}
+function payTo(oth,amt){const tot=oth.reduce((x,o)=>x+o.s,0)||1;let left=amt;oth.forEach((o,i)=>{const g=i==oth.length-1?left:Math.round(amt*o.s/tot);G.teams[o.k].money+=g;left-=g})}
+function inv(t,skip){
+ const p=G.teams[t],oth=coInfo(t),
+ a=skip?0:Math.min(Math.floor(p.money/(1+(oth.length?S.coFee/100:0))),Math.max(0,Math.floor(+$('amt').value||0)));
+ if(a<=0)return oth.length?pay(t):fin(t);
+ if(oth.length){if(!$('agree').checked){alert('The holders must accept before you can co-invest. If they refuse, press the pay-and-move-on button.');return}
+  const fee=Math.round(a*S.coFee/100);payTo(oth,fee);p.money-=fee}
+ p.money-=a;G.inv.push({t,tile:p.pos,a,r:S.tiles[p.pos].ret,r0:S.tiles[p.pos].ret});
+ fin(t);
+}
+/* Not co-investing on an occupied tile: pay the pass fee. If cash is short the team must liquidate stakes first (liquidation fee applies). */
+function pay(t){const p=G.teams[t],oth=coInfo(t),toll=oth.reduce((x,o)=>x+o.p,0);
+ if(p.money>=toll){p.money-=toll;oth.forEach(o=>{G.teams[o.k].money+=o.p});return fin(t)}
+ liqModal(t,toll)}
+function liqModal(t,toll){clearInterval(G.tmr);const p=G.teams[t],mine=G.inv.map((v,i)=>({v,i})).filter(x=>x.v.t==t),short=Math.max(0,toll-p.money);
+ modal(`<h2>⚠️ <span style="color:${S.teams[t].color}">${S.teams[t].name}</span> can't pay</h2><p>Pass fee due: <b>₹${toll}</b> · cash: ₹${p.money} · still short: <b>₹${short}</b>.<br>Sell stakes now to cover it. Each sale pays out the invested amount minus a <b>${S.liqFee}% liquidation fee</b>.</p>
+ ${mine.length?`<table><tr><th>Stake</th><th>Invested</th><th>Cash you get</th><th></th></tr>${mine.map(x=>`<tr><td>${S.tiles[x.v.tile].icon} ${S.tiles[x.v.tile].name}</td><td>₹${x.v.a}</td><td>₹${Math.round(x.v.a*(1-S.liqFee/100))}</td><td><button onclick="sell(${t},${x.i},${toll})">Sell</button></td></tr>`).join('')}</table>`:'<p>No stakes left to sell.</p>'}
+ <div class="row" style="margin-top:14px"><button class="pri" ${short>0&&mine.length?'disabled':''} onclick="payLiq(${t},${toll})">${short>0?'Pay what I can':'Pay & move on'}</button></div>`)}
+function sell(t,i,toll){const v=G.inv[i];if(!v||v.t!=t)return;G.teams[t].money+=Math.round(v.a*(1-S.liqFee/100));G.inv.splice(i,1);liqModal(t,toll)}
+function payLiq(t,toll){const p=G.teams[t],d=Math.min(toll,Math.max(0,p.money));payTo(coInfo(t),d);p.money-=d;fin(t)}
+function nextTurn(){
+ G.busy=false;const n=G.teams.length;
+ if(!G.wq)G.wq=G.teams.some(p=>!p.done)?G.teams.map((p,k)=>k).filter(k=>G.teams[k].done&&k!=G.turn&&G.teams[k].money>0):[];
+ if(G.wq.length){G.wk=G.wq.shift();renderGame();return waitModal(G.wk)}
+ G.wq=null;
+ for(let i=1;i<=n;i++){const k=(G.turn+i)%n;if(!G.teams[k].done){G.turn=k;renderGame();return}}
+ G.done=true;renderGame();setTimeout(endRound,500);
+}
+
+/* ---------- Year end: sector card (or Wildcard) + stake changes -> market card -> results + debrief ---------- */
+const sup=(k,s)=>G.inv.filter(v=>v.t==k&&S.tiles[v.tile].cat==s).reduce((x,v)=>x+v.a,0);
+const rnd=a=>a[Math.floor(Math.random()*a.length)];
+const TI=['👑','🏰','⛵','🐎'],ttl=i=>S.titles[Math.min(i,S.titles.length-1)];
+const sgn=n=>(n>=0?'+':'')+n+'%';
+const SECS=()=>Object.keys(S.cats).filter(k=>k!='action'&&k!='start');
+function invTable(){
+ if(!G.inv.length)return'<p>No investments this year.</p>';
+ return`<table><tr><th>Team</th><th>Tile</th><th>Invested</th><th>Return</th></tr>${G.inv.map((v,k)=>`<tr><td style="color:${S.teams[v.t].color};font-weight:700">${S.teams[v.t].name}</td><td>${S.tiles[v.tile].icon} ${S.tiles[v.tile].name}</td><td>₹${v.a}</td><td><input type="number" id="r${k}" value="${v.r}" style="width:80px"> %</td></tr>`).join('')}</table>`}
+function endRound(){
+ if(!$('modal').classList.contains('hide'))return;
+ if(!G.rs)G.rs={st:2,sector:null,mk:null,wild:null,left:[]};
+ renderEnd();
+}
+function renderEnd(){
+ const R=G.rs,sec=R.sector,btn='margin-top:14px';let h=`<h2>End of Year ${G.round}</h2>`;
+ if(R.st==2){
+  if(R.wild&&R.wild.pick)h+=`<div class="ban flip" style="background:#7b2cbf">🃏 Wildcard!</div><p>Invent a surprise tied to a real news item. Pick the sector it hits and by how much (teams will not see the %, only the headline).</p>
+   <div class="row"><input id="whd" placeholder="Headline, e.g. RBI cuts repo rate" size="34"><select id="wsec">${SECS().map(k=>`<option value="${k}">${S.cats[k].l}</option>`).join('')}</select><label><input type="number" id="wpc" value="20"> %</label></div>
+   <div class="row" style="${btn}"><button class="pri" onclick="setWild()">Lock wildcard →</button></div>`;
+  else if(!sec)h+=`<p>Draw a sector card. Teams may then raise their stake in that sector or leave it.</p><div class="row" style="${btn}"><button class="pri" onclick="drawSector()">🎴 Draw sector card</button><button onclick="closeM()">Back to board</button></div>`;
+  else{const c=S.cats[sec],rows=S.teams.map((t,k)=>{const a=sup(k,sec),m=G.teams[k].money;
+    return a?`<tr><td style="color:${t.color};font-weight:700">${t.name}</td><td>₹${a}</td><td>₹${m}</td><td>₹<input type="number" id="ad${k}" min="${a}" max="${a+m}" value="${a}" style="width:110px"></td><td><label><input type="checkbox" id="lv${k}" onchange="$('ad${k}').disabled=this.checked"> Leave sector</label></td></tr>`:''}).join('');
+   h+=(R.wild?`<div class="ban flip" style="background:#7b2cbf">🃏 Wildcard: ${R.wild.h}<br>Sector hit: <b>${c.l}</b></div>`:`<div class="ban flip" style="background:${c.c}">Sector in focus: <b>${c.l}</b></div>`)
+   +`<p>Raise your stake from cash, or tick <b>Leave sector</b> to cash out your whole stake here. Stakes can't be partly cut, and leaving has no fee.</p>
+   ${rows?`<table><tr><th>Team</th><th>Invested</th><th>Cash</th><th>New stake</th><th>Exit</th></tr>${rows}</table>`:'<p>No team has invested in this sector.</p>'}
+   <div class="row" style="${btn}"><button class="pri" onclick="drawMarket()">Lock in &amp; ${R.wild?'reveal the news':'draw market card'} →</button></div>`}}
+ else{const m=R.mk,c=S.cats[sec],up=m[2]>=0,lf=R.left||[];
+  h+=`<div class="ban flip" style="background:${up?'#2a9d5c':'#c0392b'}">${up?'📈 BOOM':'📉 BUST'}: ${m[0]}</div><p>${m[1]}. <b>${c.l}</b> investments ${sgn(m[2])} (applied below, you can still edit).</p>
+  ${lf.length?`<p>🚪 Left the sector: ${lf.map(k=>S.teams[k].name).join(', ')}</p>`:''}${invTable()}
+  <div class="row" style="${btn}"><button class="pri" onclick="applyRet2()">Calculate returns</button></div>`}
+ modal(h);
+}
+function drawSector(){const k=rnd([...SECS(),'wild']);if(k=='wild')G.rs.wild={pick:1};else G.rs.sector=k;renderEnd()}
+function setWild(){G.rs.sector=$('wsec').value;G.rs.wild={h:$('whd').value.trim()||'Breaking news',p:+$('wpc').value||0};renderEnd()}
+function drawMarket(){const R=G.rs,sec=R.sector;R.left=[];
+ S.teams.forEach((t,k)=>{const a=sup(k,sec),e=$('ad'+k);if(!a||!e)return;
+  const out=$('lv'+k).checked,n=out?0:Math.min(a+G.teams[k].money,Math.max(a,Math.floor(+e.value||0))),f=n/a;
+  G.inv.forEach(v=>{if(v.t==k&&S.tiles[v.tile].cat==sec)v.a=Math.round(v.a*f)});
+  if(out)R.left.push(k);
+  G.teams[k].money+=a-sup(k,sec)});
+ G.inv=G.inv.filter(v=>v.a>0);
+ const m=R.wild?['🃏 '+R.wild.h,'Wildcard news',R.wild.p]:rnd(MK);
+ G.inv.forEach(v=>{if(S.tiles[v.tile].cat==sec){v.r=Math.max(-100,v.r+m[2]);v.mk=m[2]}});
+ R.mk=m;R.st=3;renderEnd()}
+function applyRet2(){
+ const gain=S.teams.map(()=>0),rows=[],bust=[],dv={};
+ S.teams.forEach((t,k)=>{const n=new Set(G.inv.filter(v=>v.t==k).map(v=>S.tiles[v.tile].cat)).size;
+  if(S.divBonus>0&&n>=S.divMin){const b=Math.round(G.teams[k].money*S.divBonus/100);G.teams[k].money+=b;dv[k]=b}});
+ G.inv.forEach((v,k)=>{const r=+$('r'+k).value||0,p=Math.round(v.a*(1+r/100));G.teams[v.t].money+=p;gain[v.t]+=p-v.a;rows.push({t:v.t,tile:v.tile,a:v.a,r0:v.r0,mk:v.mk||0,r,p})});
+ G.deb={year:G.round,sector:G.rs.sector,mk:G.rs.mk,left:G.rs.left||[],div:dv,rows};
+ G.inv=[];G.rs=null;const last=G.round>=S.rounds;
+ if(S.loan>0)S.teams.forEach((t,k)=>{if(G.teams[k].money<=0){G.teams[k].money=S.loan;G.debt[k]+=S.loan;bust.push(t.name)}});
+ const rk=S.teams.map((t,k)=>({t,k,m:G.teams[k].money,n:G.teams[k].money-G.debt[k]})).sort((a,b)=>b.n-a.n);
+ G.resH=`<h2>${last?'Final standings':'Year '+G.deb.year+' results'}</h2>${last?`<p style="font-size:26px">🏆 <b>${rk[0].t.name}</b> wins</p>`:''}
+ <div style="margin:10px 0">${rk.map((x,i)=>`<div class="ban" style="background:${x.t.color}">${TI[i]||'🎖️'} <b>${x.t.name}</b> is the ${ttl(i)}</div>`).join('')}</div>
+ ${bust.length?`<p>🆘 ${bust.join(', ')} went bust. Rescue loan of ₹${S.loan} added; it is deducted from the final score.</p>`:''}
+ <table>${rk.map(x=>`<tr><td style="color:${x.t.color};font-weight:700">${x.t.name}</td><td>₹${x.m}${G.debt[x.k]?` <small>(owes ₹${G.debt[x.k]})</small>`:''}</td><td>${gain[x.k]>=0?'+':''}${gain[x.k]} from returns${dv[x.k]?` · 🧩 +₹${dv[x.k]} diversification bonus`:''}</td></tr>`).join('')}</table>
+ <div class="row" style="margin-top:14px">${last?'<button class="pri" onclick="startGame()">Play again</button>':`<button class="pri" onclick="nextRound()">Start Year ${G.deb.year+1}</button>`}<button onclick="showDeb()">📋 Debrief</button>${last?'<button onclick="closeM();show(0)">Setup</button>':''}</div>`;
+ modal(G.resH);
+}
+function showDeb(){const d=G.deb,c=S.cats[d.sector];
+ modal(`<h2>📋 Year ${d.year} debrief</h2><p>Sector: <b>${c.l}</b> · Market: <b>${d.mk[0]} (${sgn(d.mk[2])})</b></p>
+ ${d.rows.length?`<table><tr><th>Team</th><th>Tile</th><th>In</th><th>Base</th><th>Market</th><th>Final</th><th>Out</th></tr>${d.rows.map(x=>`<tr><td style="color:${S.teams[x.t].color};font-weight:700">${S.teams[x.t].name}</td><td>${S.tiles[x.tile].icon} ${S.tiles[x.tile].name}</td><td>₹${x.a}</td><td>${x.r0??'?'}%</td><td>${S.tiles[x.tile].cat==d.sector?sgn(x.mk):'–'}</td><td>${x.r}%</td><td>₹${x.p} (${x.p-x.a>=0?'+':''}${x.p-x.a})</td></tr>`).join('')}</table>`:'<p>No investments this year.</p>'}
+ ${d.left.length?`<p>🚪 Left the sector: ${d.left.map(k=>S.teams[k].name).join(', ')}</p>`:''}
+ ${Object.keys(d.div).length?`<p>🧩 Diversification bonus: ${Object.keys(d.div).map(k=>`${S.teams[k].name} +₹${d.div[k]}`).join(', ')}</p>`:''}<p><b>Discuss:</b> Who read the news best? Who would have invested differently knowing the event?</p><button class="pri" onclick="modal(G.resH)">Back to results</button>`)}
+function nextRound(){G.round++;G.turn=0;G.done=false;G.busy=false;G.rs=null;G.teams.forEach(p=>{p.done=false;p.pos=0;p.bonus=0});G.used=S.teams.map(()=>0);G.wq=null;closeM();renderGame()}
+document.addEventListener('keydown',e=>{if(e.code=='Space'&&G&&!$('game').classList.contains('hide')){e.preventDefault();roll()}});
+renderSetup();
+</script></body></html>
