@@ -21,7 +21,7 @@ button{cursor:pointer}
 .pri{background:var(--acc);color:var(--accfg);border-color:var(--acc);font-weight:700}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 #game{height:100%;display:flex;flex-direction:column;padding:8px;gap:8px}
-#board{width:min(100%,calc((100vh - 96px)*4/3));aspect-ratio:4/3;margin:0 auto;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(6,1fr);gap:6px}
+#board{width:min(100%,calc((100vh - var(--bh,96px))*4/3));aspect-ratio:4/3;margin:0 auto;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(6,1fr);gap:6px}
 .t{border-radius:10px;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;text-align:center;padding:2px;font-weight:700;font-size:clamp(9px,1.5vw,19px);line-height:1.1;overflow:hidden}
 .t .n{position:absolute;top:2px;left:4px;font-size:.7em;background:#0008;border-radius:4px;padding:0 4px}
 .t .i{font-size:2em}
@@ -33,8 +33,8 @@ button{cursor:pointer}
 #dice{font-size:clamp(70px,11vw,150px);line-height:1}
 .big{font-size:clamp(18px,2.4vw,32px);padding:10px 34px}
 .turn{color:#fff;font-weight:700;padding:4px 18px;border-radius:20px;font-size:clamp(14px,2vw,26px)}
-#bar{display:flex;gap:8px;align-items:stretch}
-.tm{flex:1;border-radius:10px;padding:5px 10px;color:#fff;font-weight:700;font-size:clamp(11px,1.6vw,20px)}
+#bar{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch}
+.tm{flex:1;min-width:150px;border-radius:10px;padding:5px 10px;color:#fff;font-weight:700;font-size:clamp(11px,1.6vw,20px)}
 .tm.cur{outline:4px solid #ffd400}.tm small{display:block;font-weight:400;opacity:.9}
 #modal{position:fixed;inset:0;background:#000b;display:grid;place-items:center;z-index:9}
 .box{background:var(--card);color:var(--fg);border-radius:16px;padding:22px;min-width:min(520px,92vw);max-width:92vw;max-height:90vh;overflow:auto;font-size:18px}
@@ -52,16 +52,18 @@ const RET={campus:20,govt:10,startup:40,future:60,action:0,start:0};
 /* Market cards, one per year end: [title, flavour, change in return %] */
 const MK=[['Demand surge','Customers everywhere',30],['Investor frenzy','Money is pouring in',20],['Policy tailwind','New government scheme',20],['Strong quarter','Results beat estimates',10],['Export win','Global orders arrive',15],
 ['Market crash','Panic selling',-30],['Funding freeze','Investors go quiet',-20],['Supply chain shock','Costs jump',-20],['Weak quarter','Results miss estimates',-10],['Scandal breaks','Trust takes a hit',-25]];
+const TD=[{name:'Team 1',color:'#e63946'},{name:'Team 2',color:'#1d7ae0'},{name:'Team 3',color:'#f4a300'},{name:'Team 4',color:'#2a9d5c'},{name:'Team 5',color:'#8e44ad'},{name:'Team 6',color:'#17a2b8'}];
 function mk(){
  const L=[['START','🏁','start','start'],['Amul','🍔','campus'],['DRDO','🛩️','govt'],['Blinkit','🍪','startup'],['6G Network','📡','future'],['Roll Again','🎲','action','roll'],['Delhi Metro','🚆','govt'],['Kwaliti','🍦','campus'],['Move 2 steps','↕️','action','move'],['BSNL','📶','govt'],['Roll Again','🎲','action','roll'],['Megha','🥟','campus'],['Zepto','🛵','startup'],['Humanoid Robots','🤖','future'],['Move 2 steps','↔️','action','move'],['LIC','📄','govt'],['Meesho','🛍️','startup'],['Salon Shop','💈','campus'],['IRCTC','🚂','govt'],['Quess','👥','campus'],['Quantum Computing','💠','future'],['Move 2 steps','↕️','action','move'],['Treat 2 Eat','🍛','campus'],['Alliance Air','✈️','govt']];
- return{title:'STRATEGOPOLY',sub:'ConsultU · Invest now, collect next year',money:10000,rounds:5,coFee:20,passFee:10,liqFee:2,salary:5,divMin:3,divBonus:15,timer:30,loan:1000,showRet:false,v:3,titles:['Mewar Maharajas','City Palace Courtiers','Pichola Boatmen','Haldighati Underdogs'],
- teams:[{name:'Team 1',color:'#e63946'},{name:'Team 2',color:'#1d7ae0'},{name:'Team 3',color:'#f4a300'},{name:'Team 4',color:'#2a9d5c'}],
+ return{title:'STRATEGOPOLY',sub:'ConsultU · Invest now, collect next year',money:10000,rounds:5,coFee:20,passFee:10,liqFee:2,salary:5,divMin:3,divBonus:15,timer:30,loan:1000,showRet:false,v:3,titles:['Mewar Maharajas','City Palace Courtiers','Pichola Boatmen','Haldighati Underdogs','Aravalli Wanderers','Sajjangarh Dreamers'],
+ teams:TD.slice(0,4).map(x=>({...x})),
  cats:{campus:{l:'On Campus',c:'#d9645c'},govt:{l:'Govt. Owned',c:'#2a3a73'},startup:{l:'Startup',c:'#6b9a6b'},future:{l:'Futuristic',c:'#4a3222'},action:{l:'Action',c:'#a87272'},start:{l:'Start',c:'#7cb342'}},
  tiles:L.map(a=>({name:a[0],icon:a[1],cat:a[2],type:a[3]||'invest',ret:RET[a[2]]}))};
 }
 let S=mk(),G=null;
 try{const s=JSON.parse(localStorage.getItem('strat1'));if(s&&s.tiles&&s.tiles.length==24)S=s}catch(e){}
 if((S.v||0)<3){S.coFee=20;S.passFee=10;S.liqFee=2;S.v=3}
+while(S.titles&&S.titles.length<6)S.titles.push(mk().titles[S.titles.length]);
 S.coFee??=20;S.passFee??=10;S.liqFee??=2;S.titles??=mk().titles;S.salary??=5;S.divMin??=3;S.divBonus??=15;S.timer??=30;S.loan??=1000;S.showRet??=false;
 function save(){try{localStorage.setItem('strat1',JSON.stringify(S))}catch(e){}}
 const TY={invest:'Invest tile',roll:'Roll again',move:'Move 2 steps',start:'Start / none'};
@@ -84,7 +86,7 @@ function renderSetup(){
  <label>Invest timer (sec, 0 = off) <input type="number" min="0" value="${S.timer}" oninput="S.timer=+this.value;save()"></label>
  <label>Rescue loan ₹ <input type="number" min="0" value="${S.loan}" oninput="S.loan=+this.value;save()"></label>
  <label><input type="checkbox" ${S.showRet?'checked':''} onchange="S.showRet=this.checked;save()"> Show return % in the invest popup</label></div></div>
- <div class="card"><h2>Teams</h2><div class="row">${S.teams.map((t,i)=>`<span><input type="color" value="${t.color}" onchange="S.teams[${i}].color=this.value;save()"> <input value="${q(t.name)}" oninput="S.teams[${i}].name=this.value;save()"></span>`).join('')}</div></div>
+ <div class="card"><h2>Teams</h2><div class="row"><label>Number of teams <select onchange="setN(this.value)">${[2,3,4,5,6].map(n=>`<option ${n==S.teams.length?'selected':''}>${n}</option>`).join('')}</select></label>${S.teams.map((t,i)=>`<span><input type="color" value="${t.color}" onchange="S.teams[${i}].color=this.value;save()"> <input value="${q(t.name)}" oninput="S.teams[${i}].name=this.value;save()"></span>`).join('')}</div></div>
  <div class="card"><h2>Year-end titles</h2><p>Shown after every year by net-worth rank, 1st to last.</p><div class="row">${S.titles.map((x,i)=>`<label>#${i+1} <input value="${q(x)}" size="22" oninput="S.titles[${i}]=this.value;save()"></label>`).join('')}</div></div>
  <div class="card"><h2>Categories</h2><table><tr><th>Name</th><th>Colour</th><th>Return % for all invest tiles of this category</th></tr>${ck.map(k=>`<tr><td><input value="${q(S.cats[k].l)}" oninput="S.cats[\'${k}\'].l=this.value;save()"></td><td><input type="color" value="${S.cats[k].c}" onchange="S.cats[\'${k}\'].c=this.value;save()"></td><td><input type="number" id="cr_${k}" value="${RET[k]}"> <button onclick="applyRet(\'${k}\')">Apply</button></td></tr>`).join('')}</table></div>
  <div class="card"><h2>Tiles</h2><table><tr><th>#</th><th>Icon</th><th>Name</th><th>Category</th><th>Type</th><th>Return %</th></tr>${S.tiles.map((t,i)=>`<tr><td>${i+1}</td>
@@ -94,13 +96,15 @@ function renderSetup(){
  <td><select onchange="S.tiles[${i}].type=this.value;save()">${Object.keys(TY).map(k=>`<option value="${k}" ${k==t.type?'selected':''}>${TY[k]}</option>`).join('')}</select></td>
  <td><input type="number" value="${t.ret}" oninput="S.tiles[${i}].ret=+this.value;save()"></td></tr>`).join('')}</table></div>`;
 }
+function setN(n){n=+n;if(G&&!confirm('Changing the number of teams ends the current game. Continue?')){renderSetup();return}
+ while(S.teams.length<n)S.teams.push({...TD[S.teams.length]});S.teams.length=n;G=null;save();renderSetup()}
 function applyRet(k){const v=+$('cr_'+k).value;S.tiles.forEach(t=>{if(t.cat==k&&t.type=='invest')t.ret=v});save();renderSetup()}
 function show(g){$('setup').classList.toggle('hide',!!g);$('game').classList.toggle('hide',!g);g?renderGame():renderSetup()}
 function startGame(){G={round:1,turn:0,busy:false,done:false,face:5,bag:[],rs:null,deb:null,resH:'',tmr:0,debt:S.teams.map(()=>0),teams:S.teams.map(()=>({pos:0,money:S.money,done:false})),inv:[],used:S.teams.map(()=>0),wq:null};closeM();show(1)}
 
 function gp(i){return i<8?[1,i+1]:i<12?[i-6,8]:i<20?[6,8-(i-12)]:[5-(i-20),1]}
 function renderGame(){
- const cur=G.turn;
+ const cur=G.turn;document.documentElement.style.setProperty('--bh',S.teams.length>4?'160px':'96px');
  $('board').innerHTML=S.tiles.map((t,i)=>{const[r,c]=gp(i);
   const pw=G.teams.map((p,k)=>p.pos==i?`<span class="p" style="background:${S.teams[k].color}">${k+1}</span>`:'').join('');
   return`<div class="t ${G.teams[cur].pos==i?'cur':''}" style="grid-area:${r}/${c};background:${S.cats[t.cat].c}"><span class="n">${i+1}</span><span class="i">${t.icon}</span>${t.name}<div class="pw">${pw}</div></div>`}).join('')
@@ -185,7 +189,7 @@ function nextTurn(){
 /* ---------- Year end: sector card (or Wildcard) + stake changes -> market card -> results + debrief ---------- */
 const sup=(k,s)=>G.inv.filter(v=>v.t==k&&S.tiles[v.tile].cat==s).reduce((x,v)=>x+v.a,0);
 const rnd=a=>a[Math.floor(Math.random()*a.length)];
-const TI=['👑','🏰','⛵','🐎'],ttl=i=>S.titles[Math.min(i,S.titles.length-1)];
+const TI=['👑','🏰','⛵','🐎','🏞️','🌄'],ttl=i=>S.titles[Math.min(i,S.titles.length-1)];
 const sgn=n=>(n>=0?'+':'')+n+'%';
 const SECS=()=>Object.keys(S.cats).filter(k=>k!='action'&&k!='start');
 function invTable(){
