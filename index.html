@@ -24,17 +24,34 @@ button{cursor:pointer}
 #board{width:min(100%,calc((100vh - var(--bh,96px))*4/3));aspect-ratio:4/3;margin:0 auto;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(6,1fr);gap:6px}
 .t{border-radius:10px;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;text-align:center;padding:2px;font-weight:700;font-size:clamp(9px,1.5vw,19px);line-height:1.1;overflow:hidden}
 .t .n{position:absolute;top:2px;left:4px;font-size:.7em;background:#0008;border-radius:4px;padding:0 4px}
-.t .i{font-size:2em}
+.t .n{color:#fff}.t .i{font-size:2em}
+.st{position:absolute;top:3px;right:4px;background:#000a;color:#fff;border-radius:8px;padding:0 5px;font-size:.72em}
+.pw{align-items:flex-end}
+@keyframes hop{0%{transform:translateY(0)}40%{transform:translateY(-.9em) scale(1.15)}100%{transform:translateY(0)}}
+@keyframes tumble{0%{transform:rotate(0) translateY(0)}25%{transform:rotate(100deg) translateY(-22px)}50%{transform:rotate(200deg) translateY(0)}75%{transform:rotate(290deg) translateY(-14px)}100%{transform:rotate(360deg) translateY(0)}}
+@keyframes bounce{0%{transform:scale(1.25) translateY(-30px)}45%{transform:scale(.92)}70%{transform:translateY(-8px)}100%{transform:none}}
+@keyframes bob{50%{transform:translateY(-6px) rotate(8deg)}}
+@keyframes flt{0%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,-70px)}}
+@keyframes fall{0%{transform:translateY(-10vh) rotate(0)}100%{transform:translateY(110vh) rotate(720deg)}}
+#dice.rolling{animation:tumble .45s linear infinite}#dice.bounce{animation:bounce .55s ease-out}
+.crown{display:inline-block;animation:bob 1s infinite;font-size:1.3em}.ban.first{font-size:26px;outline:3px solid #ffd400}
+.fly{position:fixed;z-index:300;pointer-events:none;background:#ffd400;color:#222;border-radius:14px;padding:2px 8px;font-weight:800;font-size:16px;box-shadow:0 2px 6px #0006}
+.fl{position:fixed;z-index:99;font-weight:800;font-size:26px;pointer-events:none;animation:flt 1.4s ease-out forwards;text-shadow:0 1px 3px #000}.fl.up{color:#7dff9a}.fl.dn{color:#ff8a8a}
+.cf{position:fixed;inset:0;pointer-events:none;z-index:200;overflow:hidden}.cf i{position:absolute;top:0;width:10px;height:16px;animation:fall linear forwards}
+body.big2{zoom:1.25}body.big2 #modal{zoom:1.2}
 .t.cur{outline:4px solid #ffd400;z-index:1}
 .pw{display:flex;gap:2px;position:absolute;bottom:2px;right:3px}
-.p{width:1.8em;height:1.8em;border-radius:50%;border:2px solid #fff;display:grid;place-items:center;font-size:.85em;color:#fff;box-shadow:0 2px 5px #0007}
+.ow{display:flex;gap:3px;position:absolute;bottom:4px;left:4px}.ow i{width:9px;height:9px;border-radius:50%;border:1.5px solid #fff;box-shadow:0 0 2px #0008}
+
+
+.p{display:inline-block;font-size:1.9em;line-height:1;filter:drop-shadow(0 2px 2px #0008)}.p sup{font-size:.4em;color:#222;background:#fff;border-radius:6px;padding:0 3px;margin-left:-2px}.p.hop{animation:hop .26s ease-out}
 #mid{grid-area:2/2/6/8;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center}
 #mid h1{font-size:clamp(26px,4.6vw,64px);letter-spacing:.06em;margin:0}
-#dice{font-size:clamp(70px,11vw,150px);line-height:1}
+#dice{font-size:clamp(70px,11vw,150px);line-height:1;background:#fff;color:#222;border-radius:22px;padding:0 .12em;box-shadow:0 8px 18px #0006,inset 0 -6px 0 #0002;display:inline-block}
 .big{font-size:clamp(18px,2.4vw,32px);padding:10px 34px}
 .turn{color:#fff;font-weight:700;padding:4px 18px;border-radius:20px;font-size:clamp(14px,2vw,26px)}
 #bar{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch}
-.tm{flex:1;min-width:150px;border-radius:10px;padding:5px 10px;color:#fff;font-weight:700;font-size:clamp(11px,1.6vw,20px)}
+.tm{position:relative;flex:1;min-width:150px;border-radius:10px;padding:5px 10px;color:#fff;font-weight:700;font-size:clamp(11px,1.6vw,20px)}
 .tm.cur{outline:4px solid #ffd400}.tm small{display:block;font-weight:400;opacity:.9}
 #modal{position:fixed;inset:0;background:#000b;display:grid;place-items:center;z-index:9}
 .box{background:var(--card);color:var(--fg);border-radius:16px;padding:22px;min-width:min(520px,92vw);max-width:92vw;max-height:90vh;overflow:auto;font-size:18px}
@@ -55,7 +72,7 @@ const MK=[['Demand surge','Customers everywhere',30],['Investor frenzy','Money i
 const TD=[{name:'Team 1',color:'#e63946'},{name:'Team 2',color:'#1d7ae0'},{name:'Team 3',color:'#f4a300'},{name:'Team 4',color:'#2a9d5c'},{name:'Team 5',color:'#8e44ad'},{name:'Team 6',color:'#17a2b8'}];
 function mk(){
  const L=[['START','🏁','start','start'],['Amul','🍔','campus'],['DRDO','🛩️','govt'],['Blinkit','🍪','startup'],['6G Network','📡','future'],['Roll Again','🎲','action','roll'],['Delhi Metro','🚆','govt'],['Kwaliti','🍦','campus'],['Move 2 steps','↕️','action','move'],['BSNL','📶','govt'],['Roll Again','🎲','action','roll'],['Megha','🥟','campus'],['Zepto','🛵','startup'],['Humanoid Robots','🤖','future'],['Move 2 steps','↔️','action','move'],['LIC','📄','govt'],['Meesho','🛍️','startup'],['Salon Shop','💈','campus'],['IRCTC','🚂','govt'],['Quess','👥','campus'],['Quantum Computing','💠','future'],['Move 2 steps','↕️','action','move'],['Treat 2 Eat','🍛','campus'],['Alliance Air','✈️','govt']];
- return{title:'STRATEGOPOLY',sub:'ConsultU · Invest now, collect next year',money:10000,rounds:5,coFee:20,passFee:10,liqFee:2,salary:5,divMin:3,divBonus:15,timer:30,loan:1000,showRet:false,v:3,titles:['Mewar Maharajas','City Palace Courtiers','Pichola Boatmen','Haldighati Underdogs','Aravalli Wanderers','Sajjangarh Dreamers'],
+ return{title:'STRATEGOPOLY',sub:'ConsultU · Invest now, collect next year',money:10000,rounds:5,coFee:20,passFee:10,liqFee:2,salary:5,divMin:3,divBonus:15,timer:30,loan:1000,showRet:false,turnTimer:30,negTimer:30,sound:true,big:false,v:3,titles:['Mewar Maharajas','City Palace Courtiers','Pichola Boatmen','Haldighati Underdogs','Aravalli Wanderers','Sajjangarh Dreamers'],
  teams:TD.slice(0,4).map(x=>({...x})),
  cats:{campus:{l:'On Campus',c:'#d9645c'},govt:{l:'Govt. Owned',c:'#2a3a73'},startup:{l:'Startup',c:'#6b9a6b'},future:{l:'Futuristic',c:'#4a3222'},action:{l:'Action',c:'#a87272'},start:{l:'Start',c:'#7cb342'}},
  tiles:L.map(a=>({name:a[0],icon:a[1],cat:a[2],type:a[3]||'invest',ret:RET[a[2]]}))};
@@ -64,7 +81,7 @@ let S=mk(),G=null;
 try{const s=JSON.parse(localStorage.getItem('strat1'));if(s&&s.tiles&&s.tiles.length==24)S=s}catch(e){}
 if((S.v||0)<3){S.coFee=20;S.passFee=10;S.liqFee=2;S.v=3}
 while(S.titles&&S.titles.length<6)S.titles.push(mk().titles[S.titles.length]);
-S.coFee??=20;S.passFee??=10;S.liqFee??=2;S.titles??=mk().titles;S.salary??=5;S.divMin??=3;S.divBonus??=15;S.timer??=30;S.loan??=1000;S.showRet??=false;
+S.coFee??=20;S.turnTimer??=30;S.negTimer??=30;S.sound??=true;S.big??=false;S.passFee??=10;S.liqFee??=2;S.titles??=mk().titles;S.salary??=5;S.divMin??=3;S.divBonus??=15;S.timer??=30;S.loan??=1000;S.showRet??=false;
 function save(){try{localStorage.setItem('strat1',JSON.stringify(S))}catch(e){}}
 const TY={invest:'Invest tile',roll:'Roll again',move:'Move 2 steps',start:'Start / none'};
 
@@ -87,6 +104,7 @@ function renderSetup(){
  <label>Rescue loan ₹ <input type="number" min="0" value="${S.loan}" oninput="S.loan=+this.value;save()"></label>
  <label><input type="checkbox" ${S.showRet?'checked':''} onchange="S.showRet=this.checked;save()"> Show return % in the invest popup</label></div></div>
  <div class="card"><h2>Teams</h2><div class="row"><label>Number of teams <select onchange="setN(this.value)">${[2,3,4,5,6].map(n=>`<option ${n==S.teams.length?'selected':''}>${n}</option>`).join('')}</select></label>${S.teams.map((t,i)=>`<span><input type="color" value="${t.color}" onchange="S.teams[${i}].color=this.value;save()"> <input value="${q(t.name)}" oninput="S.teams[${i}].name=this.value;save()"></span>`).join('')}</div></div>
+ <div class="card"><h2>Timers &amp; display</h2><div class="row"><label>Turn timer (s, 0 = off) <input type="number" min="0" value="${S.turnTimer}" oninput="S.turnTimer=+this.value;save()"></label><label>Negotiation timer (s, 0 = off) <input type="number" min="0" value="${S.negTimer}" oninput="S.negTimer=+this.value;save()"></label><label><input type="checkbox" ${S.sound?'checked':''} onchange="S.sound=this.checked;save()"> Sound</label><label><input type="checkbox" ${S.big?'checked':''} onchange="S.big=this.checked;save();document.body.classList.toggle('big2',S.big)"> Projector mode</label></div></div>
  <div class="card"><h2>Year-end titles</h2><p>Shown after every year by net-worth rank, 1st to last.</p><div class="row">${S.titles.map((x,i)=>`<label>#${i+1} <input value="${q(x)}" size="22" oninput="S.titles[${i}]=this.value;save()"></label>`).join('')}</div></div>
  <div class="card"><h2>Categories</h2><table><tr><th>Name</th><th>Colour</th><th>Return % for all invest tiles of this category</th></tr>${ck.map(k=>`<tr><td><input value="${q(S.cats[k].l)}" oninput="S.cats[\'${k}\'].l=this.value;save()"></td><td><input type="color" value="${S.cats[k].c}" onchange="S.cats[\'${k}\'].c=this.value;save()"></td><td><input type="number" id="cr_${k}" value="${RET[k]}"> <button onclick="applyRet(\'${k}\')">Apply</button></td></tr>`).join('')}</table></div>
  <div class="card"><h2>Tiles</h2><table><tr><th>#</th><th>Icon</th><th>Name</th><th>Category</th><th>Type</th><th>Return %</th></tr>${S.tiles.map((t,i)=>`<tr><td>${i+1}</td>
@@ -106,27 +124,34 @@ function gp(i){return i<8?[1,i+1]:i<12?[i-6,8]:i<20?[6,8-(i-12)]:[5-(i-20),1]}
 function renderGame(){
  const cur=G.turn;document.documentElement.style.setProperty('--bh',S.teams.length>4?'160px':'96px');
  $('board').innerHTML=S.tiles.map((t,i)=>{const[r,c]=gp(i);
-  const pw=G.teams.map((p,k)=>p.pos==i?`<span class="p" style="background:${S.teams[k].color}">${k+1}</span>`:'').join('');
-  return`<div class="t ${G.teams[cur].pos==i?'cur':''}" style="grid-area:${r}/${c};background:${S.cats[t.cat].c}"><span class="n">${i+1}</span><span class="i">${t.icon}</span>${t.name}<div class="pw">${pw}</div></div>`}).join('')
+  const ow=[...new Set(G.inv.filter(v=>v.tile==i&&v.a>0).map(v=>v.t))].map(k=>`<i style="background:${S.teams[k].color}" title="${S.teams[k].name} holds a stake"></i>`).join('');
+  const stk=G.inv.filter(v=>v.tile==i).reduce((x,v)=>x+v.a,0),pw=G.teams.map((p,k)=>p.pos==i?`<span class="p ${k==G.mvk?'hop':''}" style="color:${S.teams[k].color}"><svg viewBox="0 0 24 30" width="1em" height="1.25em" fill="currentColor" stroke="#fff" stroke-width="2" stroke-linejoin="round"><circle cx="12" cy="7" r="5"/><path d="M9.5 13h5l2.5 9h-10z"/><rect x="5" y="22" width="14" height="5" rx="2.5"/></svg><sup>${k+1}</sup></span>`:'').join('');
+  return`<div class="t ${G.teams[cur].pos==i?'cur':''}" style="grid-area:${r}/${c};background:${S.cats[t.cat].c}"><span class="n">${i+1}</span>${stk?`<span class="st">₹${fmt(stk)}</span>`:''}<span class="i">${t.icon}</span>${t.name}<div class="ow">${ow}</div><div class="pw">${pw}</div></div>`}).join('')
  +`<div id="mid"><h1>${S.title}</h1><div>${S.sub}</div><div>Year ${G.round} of ${S.rounds}</div>
- <div class="turn" style="background:${S.teams[cur].color}">${S.teams[cur].name}</div>
- <div id="dice">${F[G.face]}</div><button class="pri big" onclick="roll()">Roll dice</button>${G.used[cur]?'':'<button onclick="choose()">🎯 Choose a tile (once a year)</button>'}</div>`;
+ <div class="turn" style="background:${S.teams[cur].color}">${S.teams[cur].name}</div><div id="tt" style="font-weight:700">${S.turnTimer?'⏱ '+S.turnTimer+'s to roll':''}</div>
+ <div id="dice">${F[G.face]}</div><button class="pri big" onclick="roll()">Roll dice</button>${G.used[cur]?'':'<button onclick="choose()">🎯 Invest anywhere (once a year)</button>'}</div>`;
  $('bar').innerHTML=S.teams.map((t,k)=>{const nc=new Set(G.inv.filter(v=>v.t==k).map(v=>S.tiles[v.tile].cat)).size,pend=G.inv.filter(v=>v.t==k).reduce((s,v)=>s+v.a,0);
   return`<div class="tm ${k==cur?'cur':''}" style="background:${t.color}">${t.name}<small>Net worth ₹${G.teams[k].money+pend-G.debt[k]} · Cash ₹${G.teams[k].money}${G.teams[k].done?' · lap done ✓':''}${pend?` · ₹${pend} invested`:''} · 🧩 ${nc}/${S.divMin} categories</small></div>`}).join('')
- +`<button onclick="endRound()">End year</button><button onclick="show(0)">Setup</button>`;
+ +`<button onclick="toggleOpt('sound')">${S.sound?'🔊':'🔇'}</button><button onclick="toggleOpt('big')">🖥️</button><button onclick="endRound()">End year</button><button onclick="show(0)">Setup</button>`;
+ document.body.classList.toggle('big2',!!S.big);
+ G.lm=G.lm||G.teams.map(p=>p.money);
+ G.teams.forEach((p,k)=>{const d=p.money-G.lm[k];G.lm[k]=p.money;if(!d)return;const b=$('bar').children&&$('bar').children[k];
+  if(b&&b.getBoundingClientRect){const f=document.createElement('div'),q=b.getBoundingClientRect();f.className='fl '+(d>0?'up':'dn');f.textContent=(d>0?'+':'−')+'₹'+Math.abs(d);f.style.left=q.left+q.width/2+'px';f.style.top=q.top+'px';document.body.appendChild(f);setTimeout(()=>f.remove(),1500)}
+  if(d>0)sfx('cash')});
+ const tc=G.tc||0;if(G.clk!==tc){G.clk=tc;turnClock()}
 }
 function modal(h){$('mb').innerHTML=h;$('modal').classList.remove('hide')}
 function closeM(){if(G)clearInterval(G.tmr);$('modal').classList.add('hide')}
 function roll(){
  if(!G||G.busy||G.done||!$('modal').classList.contains('hide'))return;
- G.busy=true;let n=0;if(!G.bag.length){G.bag=[0,0,1,1,2,2,3,3,4,4,5,5].sort(()=>Math.random()-.5)}const f=G.bag.pop();
+ G.busy=true;clearInterval(G.tt);$('dice').classList.add('rolling');sfx('dice');let n=0;if(!G.bag.length){G.bag=[0,0,1,1,2,2,3,3,4,4,5,5].sort(()=>Math.random()-.5)}const f=G.bag.pop();
  const iv=setInterval(()=>{G.face=Math.floor(Math.random()*6);$('dice').textContent=F[G.face];
-  if(++n>9){clearInterval(iv);G.face=f;$('dice').textContent=F[f];walk(G.turn,f+1,1,()=>land(G.turn))}},80);
+  if(++n>9){clearInterval(iv);G.face=f;$('dice').classList.remove('rolling');$('dice').classList.add('bounce');$('dice').textContent=F[f];walk(G.turn,f+1,1,()=>land(G.turn))}},80);
 }
 /* Completing a lap (stepping from tile 24 onto Start) pays a salary on the bank balance */
 function walk(t,n,d,cb){if(!n)return cb();const p=G.teams[t],fin=d>0&&p.pos==23;p.pos=(p.pos+d+24)%24;
  if(fin){p.done=true;p.bonus=Math.round(p.money*S.salary/100);p.money+=p.bonus}
- renderGame();setTimeout(()=>fin?cb():walk(t,n-1,d,cb),260)}
+ G.mvk=t;renderGame();setTimeout(()=>fin?cb():walk(t,n-1,d,cb),260)}
 /* Other teams already invested on the tile this team stands on, with the co-invest fee owed to each */
 function coInfo(t){const pos=G.teams[t].pos;
  return S.teams.map((x,k)=>({k,s:G.inv.filter(v=>v.t==k&&v.tile==pos).reduce((s,v)=>s+v.a,0)})).filter(o=>o.k!=t&&o.s>0).map(o=>({...o,p:Math.round(o.s*S.passFee/100)}))}
@@ -140,48 +165,59 @@ function land(t){
 }
 function investModal(t){const T=S.tiles[G.teams[t].pos],nm=`<b style="color:${S.teams[t].color}">${S.teams[t].name}</b>`,m=G.teams[t].money,oth=coInfo(t),toll=oth.reduce((x,o)=>x+o.p,0),
  av=Math.floor(m/(1+(oth.length?S.coFee/100:0)));
- const co=oth.length?`<div class="co">🤝 ${oth.map(o=>`<b style="color:${S.teams[o.k].color}">${S.teams[o.k].name}</b> (₹${o.s})`).join(', ')} already invested here.<br>✅ <b>If they accept</b>: you pay <b>${S.coFee}% of what you invest</b> to them, then invest.<br>❌ <b>If they refuse</b>: you pay <b>₹${toll}</b> (${S.passFee}% of their stake) and move on.<br><label><input type="checkbox" id="agree"> They accept my co-investment</label></div>`:'';
+ const co=oth.length?`<div class="co">🤝 ${oth.map(o=>`<b style="color:${S.teams[o.k].color}">${S.teams[o.k].name}</b> (₹${o.s})`).join(', ')} already invested here.<br>🤝 <b>Co-invest:</b> the holders name a fee of <b>10–30% of your investment</b>${S.negTimer?` (${S.negTimer}s countdown)`:''} and you accept or walk away.<br>❌ <b>If it falls through</b>: you pay <b>₹${toll}</b> (${S.passFee}% of their stake) and move on.</div>`:'';
  modal(`<h2>${T.icon} ${T.name}</h2><p>${S.cats[T.cat].l}${S.showRet?` · return <b>${T.ret}%</b> next year`:''}</p><p>${nm} has ₹${m}${S.timer?` · <b id="tm">⏱ ${S.timer}s</b>`:''}</p>${co}
  <div class="row"><input id="amt" type="number" min="0" max="${av}" value="0" style="width:150px;font-size:24px">${[25,50,100].map(p=>`<button onclick="$('amt').value=Math.floor(${av}*${p}/100)">${p}%</button>`).join('')}</div>
- <div class="row" style="margin-top:14px"><button class="pri" onclick="inv(${t})">${oth.length?'Co-invest':'Invest'}</button><button onclick="inv(${t},1)">${oth.length?'They refuse / skip · pay ₹'+toll:'Skip'}</button></div>`);if(S.timer)tick(t)}
+ <div class="row" style="margin-top:14px"><button class="pri" onclick="inv(${t})">${oth.length?'Negotiate co-invest':'Invest'}</button><button onclick="inv(${t},1)">${oth.length?'They refuse / skip · pay ₹'+toll:'Skip'}</button></div>`);if(S.timer)tick(t)}
 function tick(t){clearInterval(G.tmr);let n=S.timer;G.tmr=setInterval(()=>{n--;const e=$('tm');if(!e){clearInterval(G.tmr);return}e.textContent='⏱ '+n+'s';e.style.color=n<=10?'#e63946':'';if(n<=0){clearInterval(G.tmr);inv(t,1)}},1000)}
 function tileMenu(fn){return Object.keys(S.cats).filter(k=>S.tiles.some(x=>x.cat==k&&x.type=='invest')).map(k=>`<div class="ban" style="background:${S.cats[k].c}">${S.cats[k].l}</div><div class="row">${S.tiles.map((x,i)=>x.cat==k&&x.type=='invest'?`<button onclick="${fn}(${i})">${x.icon} ${x.name}</button>`:'').join('')}</div>`).join('')}
 function choose(){
  if(!G||G.busy||G.done||G.used[G.turn]||!$('modal').classList.contains('hide'))return;
  const t=G.turn;
- modal(`<h2>🎯 Choose your investment</h2><p><b style="color:${S.teams[t].color}">${S.teams[t].name}</b>, once a year you can skip the dice and go straight to any invest tile. This replaces your roll for this turn.</p>`+tileMenu('goTile')+`<div class="row" style="margin-top:14px"><button onclick="closeM()">Cancel</button></div>`)}
+ modal(`<h2>🎯 Choose your investment</h2><p><b style="color:${S.teams[t].color}">${S.teams[t].name}</b>, once a year you can invest in any tile without moving there. Your token stays where it is, but this replaces your roll for the turn.</p>`+tileMenu('goTile')+`<div class="row" style="margin-top:14px"><button onclick="closeM()">Cancel</button></div>`)}
 /* Teams that finished their lap and wait at Start may pick a venture after every other team's turn */
 function waitModal(k){const t=S.teams[k];
  modal(`<h2>🕒 ${t.name} is waiting at Start</h2><p><b style="color:${t.color}">${t.name}</b> has ₹${G.teams[k].money}. Choose a venture to invest in while the others play, or skip.</p>`+tileMenu('waitPick')+`<div class="row" style="margin-top:14px"><button onclick="closeM();nextTurn()">Skip</button></div>`)}
-function waitPick(i){closeM();G.teams[G.wk].pos=i;investModal(G.wk)}
-function goTile(i){closeM();const t=G.turn;G.used[t]=1;G.busy=true;G.teams[t].pos=i;renderGame();land(t)}
+function waitPick(i){closeM();const p=G.teams[G.wk];p.home=p.pos;p.pos=i;investModal(G.wk)}
+function goTile(i){closeM();const t=G.turn;const p=G.teams[t];G.used[t]=1;G.busy=true;p.home=p.pos;p.pos=i;investModal(t)}
 function mv(d){closeM();walk(G.turn,2,d,()=>land(G.turn))}
-function fin(t){if(G.teams[t].done)G.teams[t].pos=0;closeM();nextTurn()}
-function payTo(oth,amt){const tot=oth.reduce((x,o)=>x+o.s,0)||1;let left=amt;oth.forEach((o,i)=>{const g=i==oth.length-1?left:Math.round(amt*o.s/tot);G.teams[o.k].money+=g;left-=g})}
+function fin(t){const p=G.teams[t];if(p.home!=null){p.pos=p.home;p.home=null}closeM();nextTurn()}
+function fly(a,b,amt){if(a==null||!(amt>0))return;try{const bar=$('bar').children,x=bar[a],y=bar[b];if(!x||!y||!x.getBoundingClientRect)return;const p=x.getBoundingClientRect(),q=y.getBoundingClientRect(),dx=q.left+q.width/2-(p.left+p.width/2),dy=q.top-p.top,e=document.createElement('div');e.className='fly';e.textContent='💸 ₹'+amt;e.style.left=p.left+p.width/2+'px';e.style.top=p.top+'px';document.body.appendChild(e);
+ if(e.animate)e.animate([{transform:'translate(-50%,0) scale(1.1)',opacity:1},{transform:`translate(calc(-50% + ${dx}px),${dy}px) scale(.7)`,opacity:1,offset:.85},{transform:`translate(calc(-50% + ${dx}px),${dy}px) scale(.4)`,opacity:0}],{duration:850,easing:'ease-in-out',fill:'forwards'});setTimeout(()=>e.remove(),900)}catch(e){}}
+function payTo(oth,amt,from){const tot=oth.reduce((x,o)=>x+o.s,0)||1;let left=amt;oth.forEach((o,i)=>{const g=i==oth.length-1?left:Math.round(amt*o.s/tot);G.teams[o.k].money+=g;left-=g;setTimeout(()=>fly(from,o.k,g),i*150)})}
 function inv(t,skip){
  const p=G.teams[t],oth=coInfo(t),
  a=skip?0:Math.min(Math.floor(p.money/(1+(oth.length?S.coFee/100:0))),Math.max(0,Math.floor(+$('amt').value||0)));
  if(a<=0)return oth.length?pay(t):fin(t);
- if(oth.length){if(!$('agree').checked){alert('The holders must accept before you can co-invest. If they refuse, press the pay-and-move-on button.');return}
-  const fee=Math.round(a*S.coFee/100);payTo(oth,fee);p.money-=fee}
+ if(oth.length)return negModal(t,a);
  p.money-=a;G.inv.push({t,tile:p.pos,a,r:S.tiles[p.pos].ret,r0:S.tiles[p.pos].ret});
  fin(t);
 }
+function negModal(t,a){clearInterval(G.tmr);const oth=coInfo(t),d=Math.min(30,Math.max(10,S.coFee));
+ modal(`<h2>🤝 Handshake</h2><p><b style="color:${S.teams[t].color}">${S.teams[t].name}</b> wants to co-invest <b>₹${a}</b> in ${S.tiles[G.teams[t].pos].name}.<br>Holders (${oth.map(o=>S.teams[o.k].name).join(', ')}) and the co-investor agree a fee of 10–30% of ₹${a}. Enter what was agreed:</p>
+ <div class="row"><label>Agreed fee % <input type="number" id="cf" min="10" max="30" step="0.5" value="${d}" style="width:90px" oninput="$('ca').value=Math.round(${a}*this.value/100)"></label><label>= ₹ <input type="number" id="ca" min="0" value="${Math.round(a*d/100)}" style="width:110px" oninput="$('cf').value=+(this.value*100/${a}).toFixed(1)"></label></div>
+ ${S.negTimer?`<p><b id="tm">⏱ ${S.negTimer}s</b></p>`:''}
+ <div class="row"><button class="pri" onclick="negOk(${t},${a})">Accept fee & invest</button><button onclick="pay(${t})">Walk away · pay ₹${oth.reduce((x,o)=>x+o.p,0)}</button></div>`);
+ if(S.negTimer){let n=S.negTimer;G.tmr=setInterval(()=>{n--;const e=$('tm');if(!e){clearInterval(G.tmr);return}e.textContent='⏱ '+n+'s';if(n<=0){clearInterval(G.tmr);pay(t)}},1000)}}
+function negOk(t,a){const p=G.teams[t],oth=coInfo(t),pct=+$('cf').value,fee=Math.round(a*pct/100);
+ if(!(pct>=10&&pct<=30)){alert('The agreed fee must be between 10% and 30% of your investment.');return}
+ if(p.money<a+fee){alert('Not enough cash for the investment plus the fee. Walk away, or agree a lower fee.');return}
+ clearInterval(G.tmr);payTo(oth,fee,t);p.money-=a+fee;G.inv.push({t,tile:p.pos,a,r:S.tiles[p.pos].ret,r0:S.tiles[p.pos].ret});fin(t)}
 /* Not co-investing on an occupied tile: pay the pass fee. If cash is short the team must liquidate stakes first (liquidation fee applies). */
 function pay(t){const p=G.teams[t],oth=coInfo(t),toll=oth.reduce((x,o)=>x+o.p,0);
- if(p.money>=toll){p.money-=toll;oth.forEach(o=>{G.teams[o.k].money+=o.p});return fin(t)}
+ if(p.money>=toll){p.money-=toll;oth.forEach((o,i)=>{G.teams[o.k].money+=o.p;setTimeout(()=>fly(t,o.k,o.p),i*150)});return fin(t)}
  liqModal(t,toll)}
 function liqModal(t,toll){clearInterval(G.tmr);const p=G.teams[t],mine=G.inv.map((v,i)=>({v,i})).filter(x=>x.v.t==t),short=Math.max(0,toll-p.money);
  modal(`<h2>⚠️ <span style="color:${S.teams[t].color}">${S.teams[t].name}</span> can't pay</h2><p>Pass fee due: <b>₹${toll}</b> · cash: ₹${p.money} · still short: <b>₹${short}</b>.<br>Sell stakes now to cover it. Each sale pays out the invested amount minus a <b>${S.liqFee}% liquidation fee</b>.</p>
  ${mine.length?`<table><tr><th>Stake</th><th>Invested</th><th>Cash you get</th><th></th></tr>${mine.map(x=>`<tr><td>${S.tiles[x.v.tile].icon} ${S.tiles[x.v.tile].name}</td><td>₹${x.v.a}</td><td>₹${Math.round(x.v.a*(1-S.liqFee/100))}</td><td><button onclick="sell(${t},${x.i},${toll})">Sell</button></td></tr>`).join('')}</table>`:'<p>No stakes left to sell.</p>'}
  <div class="row" style="margin-top:14px"><button class="pri" ${short>0&&mine.length?'disabled':''} onclick="payLiq(${t},${toll})">${short>0?'Pay what I can':'Pay & move on'}</button></div>`)}
 function sell(t,i,toll){const v=G.inv[i];if(!v||v.t!=t)return;G.teams[t].money+=Math.round(v.a*(1-S.liqFee/100));G.inv.splice(i,1);liqModal(t,toll)}
-function payLiq(t,toll){const p=G.teams[t],d=Math.min(toll,Math.max(0,p.money));payTo(coInfo(t),d);p.money-=d;fin(t)}
+function payLiq(t,toll){const p=G.teams[t],d=Math.min(toll,Math.max(0,p.money));payTo(coInfo(t),d,t);p.money-=d;fin(t)}
 function nextTurn(){
  G.busy=false;const n=G.teams.length;
  if(!G.wq)G.wq=G.teams.some(p=>!p.done)?G.teams.map((p,k)=>k).filter(k=>G.teams[k].done&&k!=G.turn&&G.teams[k].money>0):[];
  if(G.wq.length){G.wk=G.wq.shift();renderGame();return waitModal(G.wk)}
- G.wq=null;
+ G.wq=null;G.mvk=null;G.tc=(G.tc||0)+1;
  for(let i=1;i<=n;i++){const k=(G.turn+i)%n;if(!G.teams[k].done){G.turn=k;renderGame();return}}
  G.done=true;renderGame();setTimeout(endRound,500);
 }
@@ -189,6 +225,15 @@ function nextTurn(){
 /* ---------- Year end: sector card (or Wildcard) + stake changes -> market card -> results + debrief ---------- */
 const sup=(k,s)=>G.inv.filter(v=>v.t==k&&S.tiles[v.tile].cat==s).reduce((x,v)=>x+v.a,0);
 const rnd=a=>a[Math.floor(Math.random()*a.length)];
+let AC;function tone(f,d,t0,ty,v){if(!S.sound)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain(),n=AC.currentTime+(t0||0);o.type=ty||'sine';o.frequency.value=f;g.gain.setValueAtTime(v||.15,n);g.gain.exponentialRampToValueAtTime(.001,n+d);o.connect(g);g.connect(AC.destination);o.start(n);o.stop(n+d)}catch(e){}}
+function sfx(k){if(k=='dice')for(let i=0;i<7;i++)tone(180+Math.random()*120,.06,i*.07,'square',.06);
+ if(k=='cash'){tone(1319,.12,0,'triangle');tone(1760,.3,.1,'triangle')}
+ if(k=='bust')[330,262,208,147].forEach((f,i)=>tone(f,.3,i*.22,'sawtooth',.12));
+ if(k=='win')[523,659,784,1047].forEach((f,i)=>tone(f,.25,i*.13,'triangle'))}
+function confetti(){const c=document.createElement('div');c.className='cf';for(let i=0;i<90;i++){const d=document.createElement('i');d.style.cssText=`left:${Math.random()*100}%;background:hsl(${Math.random()*360},85%,55%);animation-delay:${Math.random()*.8}s;animation-duration:${2.2+Math.random()*1.8}s`;c.appendChild(d)}document.body.appendChild(c);setTimeout(()=>c.remove(),5000)}
+function turnClock(){clearInterval(G.tt);if(!S.turnTimer||G.done)return;let n=S.turnTimer;G.tt=setInterval(()=>{if(!G||G.busy||!$('modal').classList.contains('hide'))return;n--;const e=$('tt');if(e)e.textContent='⏱ '+n+'s to roll';if(n<=0){clearInterval(G.tt);roll()}},1000)}
+function toggleOpt(k){S[k]=!S[k];save();document.body.classList.toggle('big2',!!S.big);renderGame()}
+const fmt=n=>n>=1000?(n/1000).toFixed(n%1000?1:0)+'k':n;
 const TI=['👑','🏰','⛵','🐎','🏞️','🌄'],ttl=i=>S.titles[Math.min(i,S.titles.length-1)];
 const sgn=n=>(n>=0?'+':'')+n+'%';
 const SECS=()=>Object.keys(S.cats).filter(k=>k!='action'&&k!='start');
@@ -241,11 +286,11 @@ function applyRet2(){
  if(S.loan>0)S.teams.forEach((t,k)=>{if(G.teams[k].money<=0){G.teams[k].money=S.loan;G.debt[k]+=S.loan;bust.push(t.name)}});
  const rk=S.teams.map((t,k)=>({t,k,m:G.teams[k].money,n:G.teams[k].money-G.debt[k]})).sort((a,b)=>b.n-a.n);
  G.resH=`<h2>${last?'Final standings':'Year '+G.deb.year+' results'}</h2>${last?`<p style="font-size:26px">🏆 <b>${rk[0].t.name}</b> wins</p>`:''}
- <div style="margin:10px 0">${rk.map((x,i)=>`<div class="ban" style="background:${x.t.color}">${TI[i]||'🎖️'} <b>${x.t.name}</b> is the ${ttl(i)}</div>`).join('')}</div>
+ <div style="margin:10px 0">${rk.map((x,i)=>`<div class="ban ${i==0?'first':''}" style="background:${x.t.color}">${i==0?'<span class="crown">':''}${TI[i]||'🎖️'}${i==0?'</span>':''} <b>${x.t.name}</b> is the ${ttl(i)}</div>`).join('')}</div>
  ${bust.length?`<p>🆘 ${bust.join(', ')} went bust. Rescue loan of ₹${S.loan} added; it is deducted from the final score.</p>`:''}
  <table>${rk.map(x=>`<tr><td style="color:${x.t.color};font-weight:700">${x.t.name}</td><td>₹${x.m}${G.debt[x.k]?` <small>(owes ₹${G.debt[x.k]})</small>`:''}</td><td>${gain[x.k]>=0?'+':''}${gain[x.k]} from returns${dv[x.k]?` · 🧩 +₹${dv[x.k]} diversification bonus`:''}</td></tr>`).join('')}</table>
  <div class="row" style="margin-top:14px">${last?'<button class="pri" onclick="startGame()">Play again</button>':`<button class="pri" onclick="nextRound()">Start Year ${G.deb.year+1}</button>`}<button onclick="showDeb()">📋 Debrief</button>${last?'<button onclick="closeM();show(0)">Setup</button>':''}</div>`;
- modal(G.resH);
+ modal(G.resH);confetti();sfx('win');if(bust.length)setTimeout(()=>sfx('bust'),900);
 }
 function showDeb(){const d=G.deb,c=S.cats[d.sector];
  modal(`<h2>📋 Year ${d.year} debrief</h2><p>Sector: <b>${c.l}</b> · Market: <b>${d.mk[0]} (${sgn(d.mk[2])})</b></p>
